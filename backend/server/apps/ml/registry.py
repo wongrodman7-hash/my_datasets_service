@@ -27,6 +27,25 @@ class MLRegistry:
                                         parent_mlalgorithm = database_object,
                                         active = True)
             status.save()
+        
+        # Ensure the status is active for this algorithm
+        status = MLAlgorithmStatus.objects.filter(parent_mlalgorithm=database_object, active=True)
+        if not status.exists():
+            # Create a new active status if none exists
+            MLAlgorithmStatus.objects.create(status = algorithm_status,
+                                            created_by = owner,
+                                            parent_mlalgorithm = database_object,
+                                            active = True)
+
+        # Deactivate other algorithms for this endpoint
+        other_statuses = MLAlgorithmStatus.objects.filter(
+            parent_mlalgorithm__parent_endpoint=endpoint,
+            active=True
+        ).exclude(parent_mlalgorithm=database_object)
+        
+        for s in other_statuses:
+            s.active = False
+            s.save()
 
         # add to registry
         self.endpoints[database_object.id] = algorithm_object

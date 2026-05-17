@@ -11,7 +11,6 @@ class MlConfig(AppConfig):
             from apps.ml.movie_classifier.random_forest import RandomForestClassifier
             
             try:
-                print("Initializing ML registry...")
                 # Random Forest classifier
                 rf = RandomForestClassifier()
                 # add to ML registry
@@ -23,6 +22,5 @@ class MlConfig(AppConfig):
                                         owner="Piotr",
                                         algorithm_description="Random Forest with simple pre- and post-processing",
                                         algorithm_code=inspect.getsource(RandomForestClassifier))
-                print(f"ML registry initialized. Endpoints: {list(registry.endpoints.keys())}")
             except Exception as e:
                 print("Exception while loading the algorithms to the registry,", str(e))

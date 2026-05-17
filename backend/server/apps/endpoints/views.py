@@ -88,9 +88,19 @@ class PredictView(APIView):
             )
 
         alg_index = 0
-        print(f"Registry endpoints: {list(registry.endpoints.keys())}")
-        print(f"Looking for algorithm with ID: {algs[alg_index].id}")
-        algorithm_object = registry.endpoints[algs[alg_index].id]
+        found_alg = None
+        for alg in algs:
+            if alg.id in registry.endpoints:
+                found_alg = alg
+                break
+        
+        if found_alg is None:
+            return Response(
+                {"status": "Error", "message": "ML algorithm is not running in the registry"},
+                status=400,
+            )
+
+        algorithm_object = registry.endpoints[found_alg.id]
         prediction = algorithm_object.compute_prediction(request.data)
 
 
@@ -100,7 +110,7 @@ class PredictView(APIView):
             full_response=prediction,
             response=label,
             feedback="",
-            parent_mlalgorithm=algs[alg_index],
+            parent_mlalgorithm=found_alg,
         )
         ml_request.save()
 
