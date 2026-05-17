@@ -4,7 +4,10 @@ from django.db import transaction
 from rest_framework.exceptions import APIException
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.parsers import JSONParser
 import json
+from numpy.random import rand
 from apps.ml.registry import registry
 
 from apps.endpoints.models import Endpoint
@@ -66,6 +69,7 @@ class MLRequestViewSet(
 
 
 class PredictView(APIView):
+    parser_classes = [JSONParser]
     def post(self, request, endpoint_name, format=None):
 
         algorithm_status = self.request.query_params.get("status", "production")
@@ -79,38 +83,29 @@ class PredictView(APIView):
         if len(algs) == 0:
             return Response(
                 {"status": "Error", "message": "ML algorithm is not available"},
-                status=400,
+                status=status.HTTP_400_BAD_REQUEST,
             )
-        if len(algs) > 1 and algorithm_version is None:
+        if len(algs) != 1 and algorithm_status != "ab_testing":
             return Response(
                 {"status": "Error", "message": "ML algorithm selection is ambiguous. Please specify algorithm version."},
-                status=400,
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         alg_index = 0
-        found_alg = None
-        for alg in algs:
-            if alg.id in registry.endpoints:
-                found_alg = alg
-                break
-        
-        if found_alg is None:
-            return Response(
-                {"status": "Error", "message": "ML algorithm is not running in the registry"},
-                status=400,
-            )
+        if algorithm_status == "ab_testing":
+            alg_index = 0 if rand() < 0.5 else 1
 
-        algorithm_object = registry.endpoints[found_alg.id]
+        algorithm_object = registry.endpoints[algs[alg_index].id]
         prediction = algorithm_object.compute_prediction(request.data)
 
 
         label = prediction["label"] if "label" in prediction else "error"
         ml_request = MLRequest(
             input_data=json.dumps(request.data),
-            full_response=prediction,
+            full_response=json.dumps(prediction),
             response=label,
             feedback="",
-            parent_mlalgorithm=found_alg,
+            parent_mlalgorithm=algs[alg_index],
         )
         ml_request.save()
 
