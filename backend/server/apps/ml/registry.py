@@ -37,9 +37,10 @@ class MLRegistry:
                                             parent_mlalgorithm = database_object,
                                             active = True)
 
-        # Deactivate other algorithms for this endpoint
+        # Deactivate other algorithms for this endpoint with SAME status
         other_statuses = MLAlgorithmStatus.objects.filter(
             parent_mlalgorithm__parent_endpoint=endpoint,
+            status=algorithm_status,
             active=True
         ).exclude(parent_mlalgorithm=database_object)
         
