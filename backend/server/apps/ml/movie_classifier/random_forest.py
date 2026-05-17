@@ -23,6 +23,10 @@ class RandomForestClassifier:
             if column in input_data.columns:
                 input_data[column] = categorical_convert.transform(input_data[column].astype(str))
 
+        # Ensure correct column order
+        expected_columns = ['release_year', 'rating', 'duration', 'listed_in', 'country']
+        input_data = input_data[expected_columns]
+
         return input_data
 
     def predict(self, input_data):

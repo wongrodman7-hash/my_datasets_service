@@ -30,3 +30,6 @@ class MLRegistry:
 
         # add to registry
         self.endpoints[database_object.id] = algorithm_object
+
+# Global registry instance
+registry = MLRegistry()
