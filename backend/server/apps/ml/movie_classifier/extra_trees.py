@@ -19,9 +19,13 @@ class ExtraTreesClassifier:
         # convert categoricals
         for column in ["rating", "duration", "listed_in", "country"]:
             categorical_convert = self.encoders[column]
-            # Handle possible missing columns or unexpected data types
             if column in input_data.columns:
-                input_data[column] = categorical_convert.transform(input_data[column].astype(str))
+                # Handle unseen labels by mapping them to the most frequent value (mode)
+                val = str(input_data[column].iloc[0])
+                if val not in categorical_convert.classes_:
+                    input_data[column] = categorical_convert.transform([self.values_fill_missing[column]])
+                else:
+                    input_data[column] = categorical_convert.transform(input_data[column].astype(str))
 
         # Ensure correct column order
         expected_columns = ['release_year', 'rating', 'duration', 'listed_in', 'country']
